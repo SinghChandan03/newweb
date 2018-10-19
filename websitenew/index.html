@@ -4,9 +4,9 @@
   <title>Registration</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
 
 <style type="text/css">
 body { 
@@ -73,8 +73,45 @@ body {
 
 <script type="text/javascript">
 
+  var db;
+  $(document).ready(function(){
+
+                if (window.indexedDB) {
+                    console.log("IndexedDB is supported");
+                }
+                else {
+                    alert("Indexed DB is not supported!");
+                }
+                var request = indexedDB.open('Appsdb', 1);
+
+                request.onsuccess = function (e) {
+                    db = e.target.result;
+
+                    console.log(db);
+                    console.log("DB Opened!");
+                }
+
+                request.onerror = function (e) {
+                    console.log(e);
+                };
+                request.onupgradeneeded = function (e) {
+                    
+                    db = e.target.result;
+
+                    if (db.objectStoreNames.contains("Apps")) {
+                        db.deleteObjectStore("Apps");
+                    }
+                    var objectStore = db.createObjectStore('Apps', { keyPath: 'first_name', autoIncrement: true });
+
+                    console.log("Object Store has been created");
+                };
+
+            })
+
+
   function store () {
-    var transaction = db.transaction([ 'Apps' ], 'readwrite');
+
+    // var transaction = db.transaction([ 'Apps' ], 'readwrite');
 
     var first_name = document.getElementById('first_name').value;
     if (first_name == null || first_name == "") {
@@ -92,64 +129,68 @@ body {
       item ["first_name"] = first_name;
       item ["last_name"] = last_name;
 
-    var store = transaction.objectStore('Apps');
-    var request = store.add(item);
-    request.onsuccess = function (e) {
-        alert("Your App data has been saved");
-    };
-    request.onerror = function (e) {
-        alert("Error in saving the App data. Reason : " + e.value);
-    }
+
+      $.ajax({
+            type: 'post',
+            url: 'https://zibito-staging.azurewebsites.net/api/test',
+            data: JSON.stringify(item),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data) {
+                console.log(data);
+            },
+            error: function () {
+                alert('Failed');
+                var transaction = db.transaction([ 'Apps' ], 'readwrite');
+
+
+                var store = transaction.objectStore('Apps');
+                var request = store.add(item);
+                request.onsuccess = function (e) {
+                    alert("Your App data has been saved");
+                };
+                request.onerror = function (e) {
+                    alert("Error in saving the App data. Reason : " + e.value);
+                }
+
+                 // var db;
+              // });
+
+            },
+          });
 }
 
-var db;
-$(document).ready(function(){
 
-    if (window.indexedDB) {
-        console.log("IndexedDB is supported");
-    }
-    else {
-        alert("Indexed DB is not supported!");
-    }
-    var request = indexedDB.open('Appsdb', 1);
-
-    request.onsuccess = function (e) {
-        db = e.target.result;
-
-        console.log(db);
-        console.log("DB Opened!");
-    }
-
-    request.onerror = function (e) {
-        console.log(e);
-    };
-    request.onupgradeneeded = function (e) {
-        
-        db = e.target.result;
-
-        if (db.objectStoreNames.contains("Apps")) {
-            db.deleteObjectStore("Apps");
-        }
-        var objectStore = db.createObjectStore('Apps', { keyPath: 'first_name', autoIncrement: true });
-
-        console.log("Object Store has been created");
-    };
-
-});
 
         function read() {
-            var objectStore = db.transaction("Apps").objectStore("Apps");
+
+          $.ajax({
+              traditional: true,
+              type: "GET",
+              url: 'https://zibito-staging.azurewebsites.net/api/test',
+              success: function (response) {
+                  // var ABC = (response, {type:"text/plain"});
+                  console.log(response);
+                  alert(response);
+                  // console.log(response);
+              },
+              error: function () {
+                alert("here");
+                  var objectStore = db.transaction("Apps").objectStore("Apps");
             
-            objectStore.openCursor().onsuccess = function(event) {
-               var cursor = event.target.result;
-               
-               if (cursor) {
-                  alert("First Name: " + cursor.value.first_name + ", Last Name: " + cursor.value.last_name);
-                  cursor.continue();
-               } else {
-                  alert("No more entries!");
-               }
-            };
+                  objectStore.openCursor().onsuccess = function(event) {
+                     var cursor = event.target.result;
+                     
+                     if (cursor) {
+                        alert("First Name: " + cursor.value.first_name + ", Last Name: " + cursor.value.last_name);
+                        cursor.continue();
+                     } else {
+                        alert("No more entries!");
+                     }
+                  };
+              }
+          });
+
          }
 
 </script>
