@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Registration</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<style type="text/css">
+body { 
+ background: url('images/image1.jpg') no-repeat center center fixed; 
+ -webkit-background-size: cover;
+ -moz-background-size: cover;
+ -o-background-size: cover;
+ background-size: cover;
+}
+.container{
+  margin-top: 5em;
+}
+.panel-default {
+ opacity: 0.9;
+ margin-top:30px;
+}
+.form-group.last {
+ margin-bottom:0px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-5 col-md-offset-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                  <strong>Register Details</strong>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" role="form" action="#">
+                    <div class="form-group">
+                        <label for="first_name" class="col-sm-3 control-label">
+                            First Name</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="first_name" placeholder="First Name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name" class="col-sm-3 control-label">
+                            Last Name</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="last_name" placeholder="Last Name" required>
+                        </div>
+                    </div>
+                    <div class="form-group last">
+                        <div class="col-sm-offset-3 col-sm-9">
+                            <button type="submit" onclick="store();" class="btn btn-success btn-sm">Register</button>
+                            <button type="submit" onclick="read();" class="btn btn-primary btn-sm">Getdata</button>
+                             <button type="reset" class="btn btn-warning btn-sm">Reset</button>
+                        </div>
+                    </div>
+                    </form>
+                </div>
+                <div class="panel-footer">This page contains responsive contents</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<script type="text/javascript">
+
+  function store () {
+    var transaction = db.transaction([ 'Apps' ], 'readwrite');
+
+    var first_name = document.getElementById('first_name').value;
+    if (first_name == null || first_name == "") {
+        alert("First Name must be filled out");
+        return false;
+    }
+
+    var last_name = document.getElementById('last_name').value;
+    if (last_name == null || last_name == "") {
+        alert("Last Name must be filled out");
+        return false;
+    }
+
+      item = {}
+      item ["first_name"] = first_name;
+      item ["last_name"] = last_name;
+
+    var store = transaction.objectStore('Apps');
+    var request = store.add(item);
+    request.onsuccess = function (e) {
+        alert("Your App data has been saved");
+    };
+    request.onerror = function (e) {
+        alert("Error in saving the App data. Reason : " + e.value);
+    }
+}
+
+var db;
+$(document).ready(function(){
+
+    if (window.indexedDB) {
+        console.log("IndexedDB is supported");
+    }
+    else {
+        alert("Indexed DB is not supported!");
+    }
+    var request = indexedDB.open('Appsdb', 1);
+
+    request.onsuccess = function (e) {
+        db = e.target.result;
+
+        console.log(db);
+        console.log("DB Opened!");
+    }
+
+    request.onerror = function (e) {
+        console.log(e);
+    };
+    request.onupgradeneeded = function (e) {
+        
+        db = e.target.result;
+
+        if (db.objectStoreNames.contains("Apps")) {
+            db.deleteObjectStore("Apps");
+        }
+        var objectStore = db.createObjectStore('Apps', { keyPath: 'first_name', autoIncrement: true });
+
+        console.log("Object Store has been created");
+    };
+
+});
+
+        function read() {
+            var objectStore = db.transaction("Apps").objectStore("Apps");
+            
+            objectStore.openCursor().onsuccess = function(event) {
+               var cursor = event.target.result;
+               
+               if (cursor) {
+                  alert("First Name: " + cursor.value.first_name + ", Last Name: " + cursor.value.last_name);
+                  cursor.continue();
+               } else {
+                  alert("No more entries!");
+               }
+            };
+         }
+
+</script>
+
+</html>
